@@ -10,21 +10,33 @@ C = BooleanCircuit(name="AES")
 key = b"abcdefghABCDEFGH"
 plaintext = b"0123456789abcdef"
 
-key_bits = Bin(key).tuple
-pt_bits = Bin(plaintext).tuple
-
 pt = C.add_inputs(128)
 
-ct, k10 = BitAES(pt, key_bits, rounds=10)
+ct, k10 = BitAES(pt, Bin(key).tuple, rounds=10)
 
 C.add_output(ct)
+C.in_place_remove_unused_nodes()
 
 C.print_stats()
 
-ct = C.evaluate(pt_bits)
+ct = C.evaluate(Bin(plaintext).tuple)
 ct = Bin(ct).bytes
 print(ct.hex())
 
 ct2 = encrypt(plaintext, key, 10)
 print(ct2.hex())
 print()
+
+assert ct == ct2
+
+
+from wbkit.serialize import RawSerializer
+RawSerializer().serialize_to_file(C, "circuits/aes10.bin")
+
+
+from wbkit.fastcircuit import FastCircuit
+C = FastCircuit("circuits/aes10.bin")
+ciphertext = C.compute_one(plaintext)
+print(ciphertext.hex())
+ciphertexts = C.compute_batch([b"my_plaintext_abc", b"anotherPlaintext"])
+print(ciphertexts)
