@@ -30,13 +30,34 @@ print()
 assert ct == ct2
 
 
-from wbkit.serialize import RawSerializer
-RawSerializer().serialize_to_file(C, "circuits/aes10.bin")
+from wbkit.prng import NFSR, Pool
+prng = NFSR(
+    taps=[0, 7, 29, 50, 100],
+    ntaps=[[2, 77]],
+    state=pt,
+    clocks_initial=333,
+    clocks_per_step=2,
+)
+rand = Pool(prng=prng, n=150).step
+
+v = 0
+for i in range(100):
+    v ^= rand()
+C.add_output(v)
+C.in_place_remove_unused_nodes()
+C.print_stats()
 
 
-from wbkit.fastcircuit import FastCircuit
-C = FastCircuit("circuits/aes10.bin")
-ciphertext = C.compute_one(plaintext)
-print(ciphertext.hex())
-ciphertexts = C.compute_batch([b"my_plaintext_abc", b"anotherPlaintext"])
-print(ciphertexts)
+
+
+
+# from wbkit.serialize import RawSerializer
+# RawSerializer().serialize_to_file(C, "circuits/aes10.bin")
+
+
+# from wbkit.fastcircuit import FastCircuit
+# C = FastCircuit("circuits/aes10.bin")
+# ciphertext = C.compute_one(plaintext)
+# print(ciphertext.hex())
+# ciphertexts = C.compute_batch([b"my_plaintext_abc", b"anotherPlaintext"])
+# print(ciphertexts)
