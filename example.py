@@ -31,23 +31,25 @@ assert ct == ct2
 
 
 from wbkit.prng import NFSR, Pool
-prng = NFSR(
-    taps=[0, 7, 29, 50, 100],
-    ntaps=[[2, 77]],
-    state=pt,
-    clocks_initial=333,
-    clocks_per_step=2,
-)
-rand = Pool(prng=prng, n=150).step
 
-v = 0
-for i in range(100):
-    v ^= rand()
-C.add_output(v)
+nfsr = NFSR(
+    taps=[[2, 77], [0], [7], [29], [50], [100]],
+    clocks_initial=128,
+    clocks_per_step=3,
+)
+prng = Pool(prng=nfsr, n=192)
+
+
+from wbkit.masking import ISW, BU18
+
+#C = ISW(prng=prng, order=1).transform(C)
+C = BU18(prng=prng).transform(C)
 C.in_place_remove_unused_nodes()
 C.print_stats()
 
-
+ct = C.evaluate(Bin(plaintext).tuple)
+ct = Bin(ct).bytes
+print(ct.hex())
 
 
 

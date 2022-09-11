@@ -18,3 +18,10 @@ git clone https://github.com/hellman/
 pip install wbkit/ graphviz pycryptodome
 ```
 5. Run the jupyter lab and open tutorials notebooks.
+
+
+
+
+## Notes
+
+- Have a look how things work (code in frameworks)

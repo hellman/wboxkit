@@ -8,18 +8,17 @@ from random import Random
 class PRNG(object):
     n = NotImplemented # state size
 
-    def __init__(self, state, clocks_initial=0, clocks_per_step=1):
-        self.n = len(state)
-        self.set_state(state)
-
+    def __init__(self, clocks_initial=0, clocks_per_step=1):
+        self.clocks_initial = int(clocks_initial)
         self.clocks_per_step = int(clocks_per_step)
+        self.state = None
 
-        for _ in range(clocks_initial):
-            self.clock()
-
-    def set_state(self, state):
+    def set_state(self, state, initialize=True):
         self.state = deque(state)
-        assert len(self.state) == self.n
+        self.n = len(self.state)
+        if initialize:
+            for _ in range(self.clocks_initial):
+                self.clock()
 
     def step(self):
         for _ in range(self.clocks_per_step):
@@ -31,12 +30,10 @@ class PRNG(object):
 
 
 class LFSR(PRNG):
-    def __init__(self, taps, state, **kwargs):
-        n = len(state)
-        assert all(0 <= tap < n for tap in taps)
+    def __init__(self, taps, **kwargs):
         self.taps = tuple(map(int, taps))
 
-        super().__init__(state, **kwargs)
+        super().__init__(**kwargs)
 
     def clock(self):
         res = reduce(lambda a, b: a ^ b, [self.state[i] for i in self.taps])
@@ -46,26 +43,19 @@ class LFSR(PRNG):
 
 
 class NFSR(PRNG):
-    def __init__(self, taps, ntaps, state, **kwargs):
-        n = len(state)
-        assert all(0 <= tap < n for tap in taps)
-        assert all(0 <= tap < n for mono in ntaps for tap in mono)
-        assert 0 in taps
-        self.taps = tuple(map(int, taps))
-        self.ntaps = tuple(tuple(map(int, mono)) for mono in ntaps)
+    def __init__(self, taps, **kwargs):
+        self.taps = tuple(tuple(map(int, mono)) for mono in taps)
 
-        super().__init__(state, **kwargs)
+        super().__init__(**kwargs)
 
     def clock(self):
-        res = reduce(
-            lambda a, b: a ^ b,
-            [self.state[i] for i in self.taps]
-        )
-        for mono in self.ntaps:
-            res ^= reduce(
+        res = None
+        for mono in self.taps:
+            mono = reduce(
                 lambda a, b: a & b,
                 [self.state[i] for i in mono]
             )
+            res = mono if res is None else (res ^ mono)
 
         self.state.popleft()
         self.state.append(res)
@@ -76,12 +66,16 @@ class Pool(PRNG):
     def __init__(self, prng, seed=None, n=1000):
         self.prng = prng
         self.n = int(n)
-        self.state = tuple(prng.step() for _ in range(self.n))
 
         if seed is None:
             self.random = random
         else:
             self.random = Random()
+            self.random.seed(seed)
+
+    def set_state(self, state):
+        self.prng.set_state(state)
+        self.state = tuple(self.prng.step() for _ in range(self.n))
 
     def step(self):
         return self.random.choice(self.state)
