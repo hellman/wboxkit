@@ -36,7 +36,7 @@ class MaskingTransformer(CircuitTransformer):
         raise NotImplementedError()
 
     def visit_generic(self, node, *args):
-        raise NotImplementedError()
+        raise NotImplementedError(f"visiting {node}")
 
     def __repr__(self):
         return (
@@ -121,7 +121,7 @@ class ISW(MaskingTransformer):
 
 
 class BU18(MaskingTransformer):
-    NAME_SUFFIX = "_ISW"
+    NAME_SUFFIX = "_BU18"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, n_shares=3, **kwargs)
