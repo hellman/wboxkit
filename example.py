@@ -1,8 +1,12 @@
+import logging
+
 from binteger import Bin
 from circkit.boolean import OptBooleanCircuit as BooleanCircuit
 #from circkit.boolean import BooleanCircuit
 from wbkit.ciphers.aes import BitAES
 from wbkit.ciphers.aes.aes import encrypt
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 C = BooleanCircuit(name="AES")
@@ -40,10 +44,17 @@ nfsr = NFSR(
 prng = Pool(prng=nfsr, n=192)
 
 
-from wbkit.masking import ISW, BU18
+from wbkit.masking import ISW, MINQ, DumShuf
 
-#C = ISW(prng=prng, order=1).transform(C)
-C = BU18(prng=prng).transform(C)
+# C = MINQ(prng=prng).transform(C)
+# C.in_place_remove_unused_nodes()
+# C.print_stats()
+
+C = DumShuf(prng=prng, n_shares=3).transform(C)
+C.in_place_remove_unused_nodes()
+C.print_stats()
+
+C = ISW(prng=prng, order=1).transform(C)
 C.in_place_remove_unused_nodes()
 C.print_stats()
 

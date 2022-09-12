@@ -1,5 +1,3 @@
-#-*- coding:utf-8 -*-
-
 from .vector import Vector
 
 
@@ -16,6 +14,9 @@ class Rect(object):
         self.lst = []
         for i in range(0, len(vec), w):
             self.lst.append(list(vec[i:i+w]))
+
+    def __iter__(self):
+        return iter(self.lst)
 
     @classmethod
     def from_rect(cls, rect):

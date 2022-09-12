@@ -1,8 +1,16 @@
 from functools import reduce
 from operator import xor
+from queue import PriorityQueue
+
+import logging
 
 from circkit.transformers.core import CircuitTransformer
 from circkit.array import Array
+
+from wbkit.containers import Rect
+
+
+log = logging.getLogger(__name__)
 
 
 class MaskingTransformer(CircuitTransformer):
@@ -54,7 +62,8 @@ class MaskingTransformer(CircuitTransformer):
                 new_node = super().visit_generic(node)
                 inputs.append(new_node)
 
-            self.prng.set_state(inputs)
+            if self.prng is not None:
+                self.prng.set_state(inputs)
 
             for old_node, new_node in zip(circuit.inputs, inputs):
                 self.result[old_node] = self.encode(new_node)
@@ -69,8 +78,8 @@ class MaskingTransformer(CircuitTransformer):
                 self.result[node] = shares
                 inputs.extend(shares)
 
-            self.prng.set_state(inputs)
-            return Array(shares)
+            if self.prng is not None:
+                self.prng.set_state(inputs)
 
     def visit_INPUT(self, node):
         return self.result[node]
@@ -82,6 +91,7 @@ class MaskingTransformer(CircuitTransformer):
 
 
 class ISW(MaskingTransformer):
+    """Private Circuits [ISW03]"""
     NAME_SUFFIX = "_ISW"
 
     def __init__(self, *args, order=2, **kwargs):
@@ -120,8 +130,9 @@ class ISW(MaskingTransformer):
 
 
 
-class BU18(MaskingTransformer):
-    NAME_SUFFIX = "_BU18"
+class MINQ(MaskingTransformer):
+    """MINimalist Quadratic Masking [BU18]"""
+    NAME_SUFFIX = "_MINQ"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, n_shares=3, **kwargs)
@@ -183,3 +194,175 @@ class BU18(MaskingTransformer):
 
     def visit_NOT(self, node, x):
         return x[0], x[1], ~x[2]
+
+
+class DumShuf(MaskingTransformer):
+    """Dummy Shuffling [BU21]"""
+    NAME_SUFFIX = "_DumShuf"
+    EPSILON = 1e-9
+
+    def __init__(self, *args, n_shares=2, max_bias=1/8.0, **kwargs):
+        assert n_shares >= 1
+        super().__init__(*args, n_shares=n_shares, **kwargs)
+
+        self.n_dummy = int(self.n_shares) - 1
+        if self.n_dummy == 0:
+            log.warning(f"DummyLESS shuffling (n_shares={n_shares})")
+
+        self.max_bias = float(max_bias)
+        assert 0 < self.max_bias <= 1
+
+        self.refresh = None
+
+    def before_transform(self, circuit, **kwargs):
+        super().before_transform(circuit, **kwargs)
+
+        # create input vars beforehand to initialize the prng
+        if self.encode_input:
+            self.refresh = {}
+
+            inputs = []
+            for node in circuit.inputs:
+                new_node = super(MaskingTransformer, self).visit_generic(node)
+                inputs.append(new_node)
+
+            self.prng.set_state(inputs)
+
+            targets = []
+            shuf = []
+            for old_node, new_node in zip(circuit.inputs, inputs):
+                targets.append((self.result, old_node))
+                shuf.append(self.encode(new_node))
+
+            for old_node in circuit:
+                if old_node.is_AND():
+                    targets.append((self.refresh, old_node))
+                    shuf.append(self.encode(0))
+
+            shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
+            shuf, self.flags = self.shuffle(shuf)
+            shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
+            for (target, node), shares in zip(targets, shuf):
+                target[node] = shares
+
+        else:
+            raise NotImplementedError()
+
+    def visit_all(self, circuit):
+        super().visit_all(circuit)
+
+        if self.decode_output:
+            shuf = []
+            for node in circuit.outputs:
+                shuf.append(self.result[node])
+
+            shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
+            shuf = self.unshuffle(shuf, flags=self.flags)
+            shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
+
+            for node, shares in zip(circuit.outputs, shuf):
+                self.result[node] = shares
+
+    def encode(self, s):
+        # here we create dummy slots
+        # but not shuffle yet
+        x = [s] + [self.rand() for _ in range(self.n_shares-1)]
+        return Array(x)
+
+    def decode(self, x):
+        return x[0]
+
+    def shuffle(self, xs):
+        flags = []
+        xs = list(xs)
+
+        cur_ver = {i: 0 for i in range(self.n_shares)}
+
+        # -prob, index, version
+        pq_max = PriorityQueue()
+        pq_max.put((-1.0, 0, 0))
+
+        #-prob, index, version
+        pq_min = PriorityQueue()
+        for i in range(1, self.n_shares):
+            pq_min.put((0.0, i, 0))
+
+        n = len(xs[0])
+
+        # TODO: update algo to ensure bias in both directions is ok
+        # (currently one position can be prob=0.0 if it's prob can split
+        # across other positions without overflowing the limit)
+        goal = 1 / self.n_shares
+        ubound = goal + self.max_bias
+        lbound = goal - self.max_bias
+        while True:
+            assert not pq_max.empty()
+            src_prob, src, src_ver = pq_max.get()
+            src_prob = -src_prob
+            if src_ver != cur_ver[src]:
+                continue
+
+            while True:
+                assert not pq_min.empty()
+                dst_prob, dst, dst_ver = pq_min.get()
+                #print("try", dst, dst_prob)
+                if dst_ver != cur_ver[dst]:
+                    continue
+                if src == dst:
+                    continue
+                if abs(src_prob - dst_prob) < self.EPSILON:
+                    continue
+                break
+
+            if (lbound <= dst_prob + self.EPSILON
+                and src_prob <= ubound + self.EPSILON):
+                log.info(
+                    "finished with probs"
+                    f" lb:{lbound:.3f}"
+                    f" <= min:{dst_prob:.3f}"
+                    f" <= goal:{goal:.3f}"
+                    f" <= max:{src_prob:.3f}"
+                    f" <= ub:{ubound:.3f}"
+                )
+                break
+
+            prob = (src_prob + dst_prob) / 2
+            log.info(f"swap {src} {dst}: {src_prob:.3f} {dst_prob:.3f} -> {prob:.3f}")
+
+            flag = self.rand()
+            flag_vec = Array([flag]*n)
+            xs[src], xs[dst] = self.cswap(xs[src], xs[dst], flag=flag_vec)
+            flags.append((flag, src, dst))
+
+            ver = max(src_ver, dst_ver) + 1
+
+            cur_ver[src] = ver
+            cur_ver[dst] = ver
+
+            pq_max.put((-prob, src, ver))
+            pq_max.put((-prob, dst, ver))
+
+            pq_min.put((prob, src, ver))
+            pq_min.put((prob, dst, ver))
+        return xs, flags
+
+    def unshuffle(self, xs, flags):
+        xs = list(xs)
+        n = len(xs[0])
+        for flag, i, j in reversed(flags):
+            flag_vec = Array([flag]*n)
+            xs[i], xs[j] = self.cswap(xs[i], xs[j], flag=flag_vec)
+        return xs
+
+    def cswap(self, x, y, flag):
+        dxy = flag & (x ^ y)
+        return (dxy ^ y, dxy ^ x)
+
+    def visit_XOR(self, node, x, y):
+        return x ^ y
+
+    def visit_NOT(self, node, x):
+        return ~x
+
+    def visit_AND(self, node, x, y):
+        return (x & y) ^ self.refresh[node]
