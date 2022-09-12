@@ -53,7 +53,8 @@ class NFSR(PRNG):
         for mono in self.taps:
             mono = reduce(
                 lambda a, b: a & b,
-                [self.state[i] for i in mono]
+                [self.state[i] for i in mono],
+                1,
             )
             res = mono if res is None else (res ^ mono)
 
