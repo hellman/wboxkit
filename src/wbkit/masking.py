@@ -196,6 +196,102 @@ class MINQ(MaskingTransformer):
         return x[0], x[1], ~x[2]
 
 
+class QuadLin(MaskingTransformer):
+    """Quadratic Monomial + Linear shares [Seker,Eisenbarth,Liśkiewicz 2021]"""
+
+    NAME_SUFFIX = "_QuadLin"
+
+    def __init__(self, *args, n_linear=2, **kwargs):
+        self.n_linear = int(n_linear)
+        super().__init__(*args, n_shares=2 + n_linear, **kwargs)
+
+    def encode(self, s):
+        tx0 = self.rand()
+        tx1 = self.rand()
+        lins = [self.rand() for _ in range(self.n_linear-1)]
+        lins.append(reduce(xor, lins) ^ (tx0 & tx1) ^ s)
+        return tx0, tx1, Array(lins)
+
+    def decode(self, x):
+        return (x[0] & x[1]) ^ reduce(xor, x[2])
+
+    def refresh(self, x):
+        tx0, tx1, lins = x
+
+        tr0 = self.rand()  # tilde r0
+        tr1 = self.rand()  # tilde r1
+
+        tx0 ^= tr0
+        tx1 ^= tr1
+
+        x = list(lins)
+        for i in range(len(x)):
+            for j in range(i + 1, len(x)):
+                r = self.rand()
+                x[i] ^= r
+                x[j] ^= r
+
+        r0 = self.rand()
+        W = (tr0 & (tx1 ^ r0)) ^ ((tr1 & (tx0 ^ r0)))
+        R = ((tr0 ^ r0) & (tr1 ^ r0)) ^ r0
+        x[-1] ^= W ^ R
+        return tx0, tx1, Array(x)
+
+    def visit_XOR(self, node, x, y):
+        tx0, tx1, x = self.refresh(x)
+        ty0, ty1, y = self.refresh(y)
+
+        tz0 = tx0 ^ ty0
+        tz1 = tx1 ^ ty1
+
+        z = x ^ y
+        U = (tx0 & ty1) ^ (tx1 & ty0)
+        z[-1] ^= U
+        return tz0, tz1, z
+
+    def visit_AND(self, node, x, y):
+        tx0, tx1, x = self.refresh(x)
+        ty0, ty1, y = self.refresh(y)
+        n = len(x)
+
+        r0  = Array(self.rand() for _ in range(n))
+        r1  = Array(self.rand() for _ in range(n))
+
+        tz0 = (tx0 & ty1) ^ reduce(xor, r0)
+        tz1 = (tx1 & ty0) ^ reduce(xor, r1)
+
+        r = {}
+        for i in range(n+1):
+            ii = i - 1
+            for j in range(i+1, n+1):
+                jj = j - 1
+                if i == 0:
+
+                    r[j,0] = (
+                        (tx1 & ((tx0&y[jj]) ^ (r0[jj]&ty0)))
+                        ^ (ty1 & ((ty0&x[jj]) ^ (r1[jj]&tx0)))
+                        ^ (r1[jj]  & reduce(xor, r0))
+                    )
+                else:
+                    r[i,j] = self.rand()
+                    r[j,i] = (r[i,j] ^ (x[ii]&y[jj])) ^ (x[jj]&y[ii])
+
+        z = [None] * n
+        for i in range(1, n+1):
+            ii = i - 1
+            z[ii] = x[ii] & y[ii]
+            for j in range(n+1):
+                if j != i:
+                    z[ii] ^= r[i,j]
+        return tz0, tz1, Array(z)
+
+    def visit_NOT(self, node, x):
+        lins = Array(x[2])
+        lins[-1] = 1 ^ lins[-1]
+        return x[0], x[1], lins
+
+
+
 class DumShuf(MaskingTransformer):
     """Dummy Shuffling [BU21]"""
     NAME_SUFFIX = "_DumShuf"
