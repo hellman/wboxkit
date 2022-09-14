@@ -1,16 +1,19 @@
-#-*- coding:utf-8 -*-
-
 import ctypes
+from ctypes import (
+    cdll,
+    c_uint64,
+    c_void_p,
+    c_char_p,
+    c_int,
+)
+
 from pathlib import Path
-from ctypes import *
 
 path = Path(__file__).resolve().parent.parent.parent / "lib/libfastcircuit.so"
-lib = ctypes.cdll.LoadLibrary(path)
+lib = cdll.LoadLibrary(path)
 
 lib.load_circuit.restype = c_void_p
-
 lib.circuit_compute.argtypes = (c_void_p, c_char_p, c_char_p, c_char_p, c_int)
-
 lib.set_seed.argtypes = c_uint64,
 
 # lib.RANDOM_ENABLED
@@ -47,29 +50,37 @@ class CircuitInfo(ctypes.Structure):
 class FastCircuit(object):
     def __init__(self, fname):
         self.circuit = lib.load_circuit(fname.encode())
-        assert self.circuit
+        assert self.circuit, f"error loading {fname}"
         self.info = CircuitInfo.from_address(self.circuit)
 
     def compute_one(self, input, trace_filename=None):
+        trace_filename = trace_filename.encode()
         output = ctypes.create_string_buffer( int((self.info.output_size + 7)//8) )
-        lib.circuit_compute(self.circuit, input, output, trace_filename, 1)
+        ret = lib.circuit_compute(self.circuit, input, output, trace_filename, 1)
+        assert ret
         return output.raw
 
     def compute_batch(self, inputs, trace_filename=None):
+        trace_filename = trace_filename.encode()
         bytes_per_output = (self.info.output_size + 7)//8
         output = ctypes.create_string_buffer(
             int(bytes_per_output * len(inputs))
         )
         input = b"".join(inputs)
-        lib.circuit_compute(self.circuit, input, output, trace_filename, len(inputs))
+        ret = lib.circuit_compute(self.circuit, input, output, trace_filename, len(inputs))
+        assert ret
         return chunks(output.raw, bytes_per_output)
 
     def compute_batches(self, inputs, trace_filename_format=None):
+        trace_filename = trace_filename.encode()
         outputs = []
         for i, chunk in enumerate(chunks(inputs, 64)):
             trace_filename = trace_filename_format % i if trace_filename_format else None
             outputs += self.compute_batch(chunk, trace_filename)
         return outputs
+
+    def __del__(self):
+        lib.free_circuit(self.circuit)
 
 
 if __name__ == '__main__':

@@ -33,4 +33,4 @@ WORD randbit();
 
 Circuit *load_circuit(char *fname);
 void free_circuit(Circuit *C);
-void circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch);
+int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch);
