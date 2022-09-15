@@ -1,7 +1,6 @@
-#-*- coding:utf-8 -*-
-
 import os
 from collections import deque
+
 
 class Reader(object):
     TRACE_FILENAME_FORMAT = "%04d.bin"
@@ -20,7 +19,7 @@ class Reader(object):
         self.trace_bytes = None
         self.ntraces = int(ntraces)
         assert self.ntraces >= 1
-        for i in xrange(self.ntraces):
+        for i in range(self.ntraces):
             f_trace = os.path.join(dir, self.TRACE_FILENAME_FORMAT % i)
             f_pt = os.path.join(dir, self.PLAINTEXT_FILENAME_FORMAT % i)
             f_ct = os.path.join(dir, self.CIPHERTEXT_FILENAME_FORMAT % i)
@@ -96,14 +95,14 @@ class Reader(object):
         if not self.packed:
             # 1 bit in byte
             for i, b in enumerate(data):
-                val = ord(b) & 1
+                val = b & 1
                 vectors[i] = (vectors[i] << 1) | val
             assert b in "\x00\x01", "sure not packed?"
         else:
             # 8 bits in byte (packed)
             for i, b in enumerate(data):
-                b = ord(b)
-                for j in xrange(8):
+                b = b
+                for j in range(8):
                     id = (i << 3) | j
                     bit = (b >> (7 - j)) & 1
                     vectors[id] = (vectors[id] << 1) | bit

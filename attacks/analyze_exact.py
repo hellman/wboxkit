@@ -1,7 +1,9 @@
-#!/usr/bin/env python2
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python
 
+import argparse
+import pathlib
 import sys, os, string
+
 from itertools import product
 from collections import defaultdict
 
@@ -9,23 +11,26 @@ from sbox import sbox, rsbox
 from reader import Reader
 
 
-#== Configuration
+parser = argparse.ArgumentParser(
+    description='Apply "Exact Matching Attack" on pre-recorder traces.'
+)
+parser.add_argument('trace_dir', type=pathlib.Path)
+parser.add_argument('-T', '--n-traces', type=int, default=500)
+parser.add_argument('-w', '--window', type=int, default=250)
+parser.add_argument('--step', type=int, default=125)
+
+args = parser.parse_args()
+
 
 # go from the end of the traces if we attack last S-Boxes ?
 REVERSE = False # not supported yet
 
-NTRACES = int(sys.argv[1])
-WINDOW = int(sys.argv[2])
-STEP = WINDOW
-if len(sys.argv) >= 4:
-    STEP = int(sys.argv[3])
-
-R = Reader(ntraces=NTRACES,
-           window=WINDOW,
-           step=STEP,
+R = Reader(ntraces=args.n_traces,
+           window=args.window,
+           step=args.step,
            packed=True,
            reverse=REVERSE,
-           dir="./traces")
+           dir=args.trace_dir)
 
 
 STOP_ON_FIRST_MATCH = 0
@@ -63,7 +68,7 @@ def scalar_bin(a, b):
 
 MASK = 2**R.ntraces - 1
 
-print "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes)
+print( "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes) )
 
 #== Generate predicted vectors from plaintext/ciphertext and key guess
 
@@ -73,38 +78,41 @@ for si, lin, k in product(BYTE_INDICES, LINS, KS):
     for p, c in zip(R.pts, R.cts):
         if k is None:
             if CT_SIDE:
-                x = ord(c[si])
+                x = (c[si])
             else:
-                x = ord(p[si])
+                x = (p[si])
         else:
             if CT_SIDE:
-                x = ord(c[si])
+                x = (c[si])
                 x = rsbox[x ^ k]
             else:
-                x = ord(p[si])
+                x = (p[si])
                 x = sbox[x ^ k]
         target = (target << 1) | scalar_bin(x, lin)
 
     targets.append((target, (si, lin, k, 0)))
     targets.append((target ^ MASK, (si, lin, k, 1)))
 
-print "Generated %d target vectors" % len(targets)
+n_matches = [0] * 16
+
+print( "Generated %d target vectors" % len(targets) )
+g_candidates = [set() for _ in range(16)]
 
 #== Read traces and analyze
 for i_window, vectors in enumerate(R):
-    print "Window %d" % (i_window+1), "/", R.num_windows,
+    print( "Window %d" % (i_window+1), "/", R.num_windows, )
 
-    print "offset %d-%d (of %d)" % (R.offset*8, R.offset*8 + len(vectors), R.trace_bytes*8)
-    print "   ", len(vectors), "vectors"
+    print( "offset %d-%d (of %d)" % (R.offset*8, R.offset*8 + len(vectors), R.trace_bytes*8) )
+    print( "   ", len(vectors), "vectors" )
 
     vectors_rev = defaultdict(list)
     for off, v in enumerate(vectors):
         vectors_rev[v].append(R.offset + off)
 
-    print "   ", len(vectors_rev), "unique vectors"
-    print "   ", len(targets), "target vectors"
+    print( "   ", len(vectors_rev), "unique vectors" )
+    print( "   ", len(targets), "target vectors" )
 
-    candidates = [set() for _ in xrange(16)]
+    candidates = [set() for _ in range(16)]
     key_found = False
 
     for target, kinfo in targets:
@@ -114,17 +122,19 @@ for i_window, vectors in enumerate(R):
 
         # single value
         if target in vectors_rev:
-            print "MATCH (SINGLE):",
-            print "sbox #%d," % si,
-            print "lin.mask 0x%02x," % lin,
-            print "key 0x%02x=%r," % (k, chr(k)),
-            print "negated? %s," % bool(const1),
+            print( "MATCH (SINGLE):", )
+            print( "sbox #%d," % si, )
+            print( "lin.mask 0x%02x," % lin, )
+            print( "key 0x%02x=%r," % (k, chr(k)), )
+            print( "negated? %s," % bool(const1), )
             # linear combination indexes (may be non-unique)
             inds = vectors_rev[target][:10]
-            print "indexes", "(%d total)" % len(vectors_rev[target]), inds,
-            print
+            print( "indexes", "(%d total)" % len(vectors_rev[target]), inds, )
+            print( )
 
             candidates[si].add(k)
+            g_candidates[si].add(k)
+            n_matches[si] += 1
             key_found = True
 
         if ENABLE_SECOND_ORDER:
@@ -134,36 +144,52 @@ for i_window, vectors in enumerate(R):
                     continue
                 v2 = target ^ v1
                 if v2 in vectors_rev:
-                    print "MATCH (DOUBLE):",
-                    print "sbox #%d," % si,
-                    print "lin.mask 0x%02x," % lin,
-                    print "key 0x%02x=%r," % (k, chr(k)),
-                    print "negated? %s," % bool(const1),
+                    print( "MATCH (DOUBLE):", )
+                    print( "sbox #%d," % si, )
+                    print( "lin.mask 0x%02x," % lin, )
+                    print( "key 0x%02x=%r," % (k, chr(k)), )
+                    print( "negated? %s," % bool(const1), )
                     # linear combination indexes (may be non-unique)
                     inds1 = vectors_rev[v1][:5]
                     inds2 = vectors_rev[v2][:5]
-                    print "indexes", "(%d and %d total)" % (len(vectors_rev[v1]), len(vectors_rev[v2])), inds1, inds2
-                    print
+                    print( "indexes", "(%d and %d total)" % (len(vectors_rev[v1]), len(vectors_rev[v2])), inds1, inds2 )
+                    print( )
 
-                    candidates[si].add(k)
+                    g_candidates[si].add(k)
                     key_found = True
 
-                    print "   ", "   ", [divmod(v, 8) for v in vectors_rev[v1][:10]]
-                    print "   ", "   ", [divmod(v, 8) for v in vectors_rev[v2][:10]]
-                    print
+                    print( "   ", "   ", [divmod(v, 8) for v in vectors_rev[v1][:10]] )
+                    print( "   ", "   ", [divmod(v, 8) for v in vectors_rev[v2][:10]] )
+                    print( )
 
-                    candidates[si].add(k)
+                    g_candidates[si].add(k)
+                    n_matches[si] += 1
                     key_found = True
 
     if key_found:
-        print
-        print "Key candidates found:"
+        print( )
+        print( "Key candidates found:" )
         for si, cands in enumerate(candidates):
             if cands:
-                print "S-Box #%d: %s" % (si, ",".join("0x%02x(%r)" % (c, chr(c)) for c in cands))
-        print
+                print( "S-Box #%d: %s" % (si, ",".join("0x%02x(%r)" % (c, chr(c)) for c in cands)) )
+        print( )
 
     if key_found and STOP_ON_FIRST_MATCH:
         quit()
 
+print("=================================")
+print("")
+print("Matches (by position):", n_matches)
+print( "Key candidates found:" )
+example = ""
+for si, cands in enumerate(g_candidates):
+    if cands:
+        print( "S-Box #%d: %s" % (si, ",".join("0x%02x(%r)" % (c, chr(c)) for c in cands)) )
+        for c in cands:
+            break
+        example += "%02x" % c
+    else:
+        example += "??"
+print( )
 
+print("Example:", example)
