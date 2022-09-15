@@ -13,6 +13,10 @@ from wbkit.containers import Rect
 log = logging.getLogger(__name__)
 
 
+def xorlist(lst):
+    return reduce(xor, lst, 0)
+
+
 class MaskingTransformer(CircuitTransformer):
     START_FROM_VARS = True  # ensure all INPUTS are processed first
 
@@ -100,11 +104,11 @@ class ISW(MaskingTransformer):
 
     def encode(self, s):
         x = [self.rand() for _ in range(self.n_shares-1)]
-        x.append(reduce(xor, x) ^ s)
+        x.append(xorlist(x) ^ s)
         return Array(x)
 
     def decode(self, x):
-        return reduce(xor, x)
+        return xorlist(x)
 
     def visit_XOR(self, node, x, y):
         return x ^ y
@@ -209,11 +213,11 @@ class QuadLin(MaskingTransformer):
         tx0 = self.rand()
         tx1 = self.rand()
         lins = [self.rand() for _ in range(self.n_linear-1)]
-        lins.append(reduce(xor, lins) ^ (tx0 & tx1) ^ s)
+        lins.append(xorlist(lins) ^ (tx0 & tx1) ^ s)
         return tx0, tx1, Array(lins)
 
     def decode(self, x):
-        return (x[0] & x[1]) ^ reduce(xor, x[2])
+        return (x[0] & x[1]) ^ xorlist(x[2])
 
     def refresh(self, x):
         tx0, tx1, lins = x
@@ -257,8 +261,8 @@ class QuadLin(MaskingTransformer):
         r0  = Array(self.rand() for _ in range(n))
         r1  = Array(self.rand() for _ in range(n))
 
-        tz0 = (tx0 & ty1) ^ reduce(xor, r0)
-        tz1 = (tx1 & ty0) ^ reduce(xor, r1)
+        tz0 = (tx0 & ty1) ^ xorlist(r0)
+        tz1 = (tx1 & ty0) ^ xorlist(r1)
 
         r = {}
         for i in range(n+1):
@@ -270,7 +274,7 @@ class QuadLin(MaskingTransformer):
                     r[j,0] = (
                         (tx1 & ((tx0&y[jj]) ^ (r0[jj]&ty0)))
                         ^ (ty1 & ((ty0&x[jj]) ^ (r1[jj]&tx0)))
-                        ^ (r1[jj]  & reduce(xor, r0))
+                        ^ (r1[jj]  & xorlist(r0))
                     )
                 else:
                     r[i,j] = self.rand()
