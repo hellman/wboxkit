@@ -54,14 +54,16 @@ class FastCircuit(object):
         self.info = CircuitInfo.from_address(self.circuit)
 
     def compute_one(self, input, trace_filename=None):
-        trace_filename = trace_filename.encode()
+        if trace_filename is not None:
+            trace_filename = trace_filename.encode()
         output = ctypes.create_string_buffer( int((self.info.output_size + 7)//8) )
         ret = lib.circuit_compute(self.circuit, input, output, trace_filename, 1)
         assert ret
         return output.raw
 
     def compute_batch(self, inputs, trace_filename=None):
-        trace_filename = trace_filename.encode()
+        if trace_filename is not None:
+            trace_filename = trace_filename.encode()
         bytes_per_output = (self.info.output_size + 7)//8
         output = ctypes.create_string_buffer(
             int(bytes_per_output * len(inputs))
