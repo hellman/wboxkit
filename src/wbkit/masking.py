@@ -335,8 +335,9 @@ class DumShuf(MaskingTransformer):
                     targets.append((self.refresh, old_node))
                     shuf.append(self.encode(0))
 
+            self.flags = self.create_shuffle()
             shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
-            shuf, self.flags = self.shuffle(shuf)
+            shuf = self.shuffle(shuf, flags=self.flags)
             shuf = list(map(Array, Rect.from_rect(shuf).transpose()))
             for (target, node), shares in zip(targets, shuf):
                 target[node] = shares
@@ -368,9 +369,8 @@ class DumShuf(MaskingTransformer):
     def decode(self, x):
         return x[0]
 
-    def shuffle(self, xs):
+    def create_shuffle(self):
         flags = []
-        xs = list(xs)
 
         cur_ver = {i: 0 for i in range(self.n_shares)}
 
@@ -382,8 +382,6 @@ class DumShuf(MaskingTransformer):
         pq_min = PriorityQueue()
         for i in range(1, self.n_shares):
             pq_min.put((0.0, i, 0))
-
-        n = len(xs[0])
 
         # TODO: update algo to ensure bias in both directions is ok
         # (currently one position can be prob=0.0 if it's prob can split
@@ -398,8 +396,8 @@ class DumShuf(MaskingTransformer):
             if src_ver != cur_ver[src]:
                 continue
 
-            while True:
-                assert not pq_min.empty()
+            found = 0
+            while not pq_min.empty():
                 dst_prob, dst, dst_ver = pq_min.get()
                 #print("try", dst, dst_prob)
                 if dst_ver != cur_ver[dst]:
@@ -408,6 +406,8 @@ class DumShuf(MaskingTransformer):
                     continue
                 if abs(src_prob - dst_prob) < self.EPSILON:
                     continue
+
+                found = 1
                 break
 
             if (lbound <= dst_prob + self.EPSILON
@@ -422,12 +422,12 @@ class DumShuf(MaskingTransformer):
                 )
                 break
 
+            assert found
+
             prob = (src_prob + dst_prob) / 2
             log.info(f"swap {src} {dst}: {src_prob:.3f} {dst_prob:.3f} -> {prob:.3f}")
 
             flag = self.rand()
-            flag_vec = Array([flag]*n)
-            xs[src], xs[dst] = self.cswap(xs[src], xs[dst], flag=flag_vec)
             flags.append((flag, src, dst))
 
             ver = max(src_ver, dst_ver) + 1
@@ -440,7 +440,15 @@ class DumShuf(MaskingTransformer):
 
             pq_min.put((prob, src, ver))
             pq_min.put((prob, dst, ver))
-        return xs, flags
+        return flags
+
+    def shuffle(self, xs, flags):
+        xs = list(xs)
+        n = len(xs[0])
+        for flag, i, j in flags:
+            flag_vec = Array([flag]*n)
+            xs[i], xs[j] = self.cswap(xs[i], xs[j], flag=flag_vec)
+        return xs
 
     def unshuffle(self, xs, flags):
         xs = list(xs)
