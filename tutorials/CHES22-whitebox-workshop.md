@@ -24,4 +24,6 @@ pip install wbkit/ graphviz pycryptodome
 
 ## Notes
 
+- How to work with Jupyter lab
+
 - Have a look how things work (code in frameworks)

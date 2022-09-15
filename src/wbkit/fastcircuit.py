@@ -72,7 +72,6 @@ class FastCircuit(object):
         return chunks(output.raw, bytes_per_output)
 
     def compute_batches(self, inputs, trace_filename_format=None):
-        trace_filename = trace_filename.encode()
         outputs = []
         for i, chunk in enumerate(chunks(inputs, 64)):
             trace_filename = trace_filename_format % i if trace_filename_format else None
