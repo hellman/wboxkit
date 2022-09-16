@@ -73,7 +73,7 @@ R = Reader(
 
 
 STOP_ON_FIRST_MATCH = 0
-ONE_CANDIDATE_PER_SBOX = True
+ONE_CANDIDATE_PER_SBOX = 0
 
 # second order should break 1-st order linear masking
 if args.order == 1:
@@ -178,8 +178,8 @@ for i_window, vectors in enumerate(R):
 
     for target, kinfo in targets:
         si, lin, k, const1 = kinfo
-        # if ONE_CANDIDATE_PER_SBOX and candidates[si]:
-        #     continue
+        if ONE_CANDIDATE_PER_SBOX and candidates[si]:
+            continue
 
         # single value
         if target in vectors_rev:
@@ -237,6 +237,7 @@ for i_window, vectors in enumerate(R):
 
     if key_found and STOP_ON_FIRST_MATCH:
         quit()
+
 
 print("=================================")
 print("")
