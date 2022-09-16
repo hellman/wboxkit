@@ -14777,7 +14777,7 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">binteger</span> <span class="kn">import</span> <span class="n">Bin</span>
@@ -14858,7 +14858,7 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">C</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">Bin</span><span class="p">(</span><span class="n">plaintext</span><span class="p">)</span><span class="o">.</span><span class="n">tuple</span><span class="p">)</span>
@@ -14879,7 +14879,7 @@ div.jp-OutputPrompt {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
 
 
 
@@ -15894,7 +15894,7 @@ div.jp-OutputPrompt {
 
 </div>
 
-</div>
+</div></section><section>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -15911,7 +15911,7 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">wbkit.serialize</span> <span class="kn">import</span> <span class="n">RawSerializer</span>
@@ -15941,15 +15941,15 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">wbkit.fastcircuit</span> <span class="kn">import</span> <span class="n">FastCircuit</span>
 
 <span class="n">plaintext</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;0123456789abcdef&quot;</span>
 
-<span class="n">C</span> <span class="o">=</span> <span class="n">FastCircuit</span><span class="p">(</span><span class="s2">&quot;circuits/aes10_clear.bin&quot;</span><span class="p">)</span>
-<span class="n">ciphertext</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">compute_one</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">trace_filename</span><span class="o">=</span><span class="s2">&quot;traces/test&quot;</span><span class="p">)</span>
+<span class="n">FC</span> <span class="o">=</span> <span class="n">FastCircuit</span><span class="p">(</span><span class="s2">&quot;circuits/aes10_clear.bin&quot;</span><span class="p">)</span>
+<span class="n">ciphertext</span> <span class="o">=</span> <span class="n">FC</span><span class="o">.</span><span class="n">compute_one</span><span class="p">(</span><span class="n">plaintext</span><span class="p">,</span> <span class="n">trace_filename</span><span class="o">=</span><span class="s2">&quot;traces/test&quot;</span><span class="p">)</span>
 <span class="n">ciphertext</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
 </pre></div>
 
@@ -15968,7 +15968,7 @@ div.jp-OutputPrompt {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
 
 
 
@@ -15983,7 +15983,7 @@ div.jp-OutputPrompt {
 
 </div>
 
-</div>
+</div></section><section>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -16000,10 +16000,13 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ciphertexts</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">compute_batch</span><span class="p">([</span><span class="sa">b</span><span class="s2">&quot;my_plaintext_abc&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;anotherPlaintext&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">trace_filename</span><span class="o">=</span><span class="s2">&quot;traces/test2&quot;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ciphertexts</span> <span class="o">=</span> <span class="n">FC</span><span class="o">.</span><span class="n">compute_batch</span><span class="p">(</span>
+    <span class="p">[</span><span class="sa">b</span><span class="s2">&quot;my_plaintext_abc&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;anotherPlaintext&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">trace_filename</span><span class="o">=</span><span class="s2">&quot;traces/test2&quot;</span>
+<span class="p">)</span>
 <span class="n">ciphertexts</span>
 </pre></div>
 
@@ -16022,7 +16025,7 @@ div.jp-OutputPrompt {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 
 
 
@@ -16049,7 +16052,7 @@ div.jp-OutputPrompt {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;traces/test2&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -16084,7 +16087,7 @@ div.jp-OutputPrompt {
 
 </div>
 
-</div>
+</div></section></section><section><section>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -16118,22 +16121,9 @@ div.jp-OutputPrompt {
 Tracing circuits/aes10_clear.bin on <span class="m">256</span> traces
 Saving to traces//aes10_clear/
 splitting <span class="m">0</span>
-splitting <span class="m">1</span>
-splitting <span class="m">2</span>
+...
 splitting <span class="m">3</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<div class="highlight"><pre><span></span>&gt; ls -al traces/aes10_clear/ <span class="p">|</span> tail -20
+&gt; ls -al traces/aes10_clear/ <span class="p">|</span> tail -20
 -rw-rw-r-- <span class="m">1</span> user user    <span class="m">16</span> Sep <span class="m">14</span> <span class="m">13</span>:21 <span class="m">0249</span>.ct
 -rw-rw-r-- <span class="m">1</span> user user    <span class="m">16</span> Sep <span class="m">14</span> <span class="m">13</span>:21 <span class="m">0249</span>.pt
 -rw-rw-r-- <span class="m">1</span> user user  <span class="m">3894</span> Sep <span class="m">14</span> <span class="m">13</span>:21 <span class="m">0250</span>.bin
@@ -16159,7 +16149,7 @@ splitting <span class="m">3</span>
 </div>
 </div>
 </div>
-</div>
+</div></section></section><section><section>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -16188,22 +16178,6 @@ splitting <span class="m">3</span>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
 </div></section></section>
 </div>
 </div>
