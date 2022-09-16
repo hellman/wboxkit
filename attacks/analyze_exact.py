@@ -4,6 +4,8 @@ import argparse
 import pathlib
 import sys, os, string
 
+from random import sample
+
 from itertools import product
 from collections import defaultdict
 
@@ -12,39 +14,84 @@ from reader import Reader
 
 
 parser = argparse.ArgumentParser(
-    description='Apply "Exact Matching Attack" on pre-recorder traces.'
+    description='Apply "Exact Matching Attack" on pre-recorder traces.',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
-parser.add_argument('trace_dir', type=pathlib.Path)
-parser.add_argument('-T', '--n-traces', type=int, default=500)
-parser.add_argument('-w', '--window', type=int, default=250)
-parser.add_argument('--step', type=int, default=125)
+parser.add_argument(
+    'trace_dir', type=pathlib.Path,
+    help="path to directory with trace/plaintext/ciphertext files")
+parser.add_argument(
+    '-T', '--n-traces', type=int, default=100,
+    help="number of traces to use in the attack"
+)
+parser.add_argument(
+    '-w', '--window', type=int, default=2048,
+    help="sliding window size"
+)
+parser.add_argument(
+    '-s', '--step', type=int, default=1024,
+    help="sliding window step",
+)
+parser.add_argument(
+    '--masks', default="1,2,4,8,16,32,64,128",
+    help=(
+        "linear masks to consider"
+        " (comma separated ints, or 'all', or 'random16', 'random32')"
+    )
+)
+parser.add_argument(
+    '-o', '--order', type=int, default=1,
+    help="attack order (1 or 2)",
+)
+parser.add_argument(
+    '--pos', default="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
+    help="byte positions to attack",
+)
+
+# parser.add_argument(
+#     '--candidate-limit', type=int, default=8,
+#     help="limit of key candidates per S-box",
+# )
 
 args = parser.parse_args()
-
 
 # go from the end of the traces if we attack last S-Boxes ?
 REVERSE = False # not supported yet
 
-R = Reader(ntraces=args.n_traces,
-           window=args.window,
-           step=args.step,
-           packed=True,
-           reverse=REVERSE,
-           dir=args.trace_dir)
+if args.step > args.window:
+    print("step larger than the window size, reducing to window/4")
+    args.step = args.window // 4
+
+
+R = Reader(
+    ntraces=args.n_traces,
+    window=args.window,
+    step=args.step,
+    packed=True,
+    reverse=REVERSE,
+    dir=args.trace_dir,
+)
 
 
 STOP_ON_FIRST_MATCH = 0
 ONE_CANDIDATE_PER_SBOX = True
 
 # second order should break 1-st order linear masking
-ENABLE_SECOND_ORDER = 0
+if args.order == 1:
+    ENABLE_SECOND_ORDER = 0
+elif args.order == 2:
+    ENABLE_SECOND_ORDER = 1
+else:
+    print("unsupported order", args.order, "(only 1 and 2 now)")
+    quit()
+
 
 # attack last S-Box?
 CT_SIDE = REVERSE
 
 # which/how many  S-Boxes to attack
-BYTE_INDICES = range(16) # all
-# BYTE_INDICES = range(3) # only first 3
+BYTE_INDICES = tuple(map(int, args.pos.split(",")))
+assert set(BYTE_INDICES) <= set(range(16))
 
 # charset for key bytes
 KS = range(256)
@@ -53,9 +100,22 @@ KS = range(256)
 # linear masks to check after S-Box, for example
 # 0xff will try to match scalar_product(SBox(x xor k), 0b11111111)
 # 1 matches the last output bit
-LINS = (1, 2, 4, 8, 16, 32, 64, 127, 255)
-LINS = (1,)
-# LINS = range(1, 256)
+
+if args.masks == 'all':
+    args.masks = tuple(range(1, 256))
+elif args.masks == 'random16':
+    pool = [i for i in range(1, 2**8) if i & (i - 1)]  # not powers of 2
+    args.masks = tuple(2**i for i in range(8)) + tuple(sample(pool, 16-8))
+elif args.masks == 'random32':
+    pool = [i for i in range(1, 2**8) if i & (i - 1)]  # not powers of 2
+    args.masks = tuple(2**i for i in range(8)) + tuple(sample(pool, 32-8))
+
+if isinstance(args.masks, str):
+    args.masks = tuple(map(int, args.masks.split(",")))
+
+assert isinstance(args.masks, tuple)
+
+LINS = args.masks
 
 
 def scalar_bin(a, b):
@@ -69,6 +129,8 @@ def scalar_bin(a, b):
 MASK = 2**R.ntraces - 1
 
 print( "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes) )
+
+print("Using linear masks:", LINS)
 
 #== Generate predicted vectors from plaintext/ciphertext and key guess
 
@@ -117,8 +179,8 @@ for i_window, vectors in enumerate(R):
 
     for target, kinfo in targets:
         si, lin, k, const1 = kinfo
-        if ONE_CANDIDATE_PER_SBOX and candidates[si]:
-            continue
+        # if ONE_CANDIDATE_PER_SBOX and candidates[si]:
+        #     continue
 
         # single value
         if target in vectors_rev:
