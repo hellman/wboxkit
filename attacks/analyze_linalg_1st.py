@@ -148,6 +148,8 @@ target_mat = matrix(GF(2), [target for target, kinfo in targets])
 
 #== Read traces and analyze
 candidates = [set() for _ in range(16)]
+n_matches = [0 for _ in range(16)]
+g_candidates = [set() for _ in range(16)]
 for i_window, vectors in enumerate(R):
     print( "Window %d" % (i_window+1), "/", R.num_windows,)
 
@@ -189,6 +191,8 @@ for i_window, vectors in enumerate(R):
         print()
 
         candidates[si].add(k)
+        g_candidates[si].add(k)
+        n_matches[si] += 1
         key_found = True
 
     if key_found:
