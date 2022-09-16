@@ -27,3 +27,5 @@ pip install wbkit/ graphviz pycryptodome
 - How to work with Jupyter lab
 
 - Have a look how things work (code in frameworks)
+
+- do a Make

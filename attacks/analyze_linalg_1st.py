@@ -1,14 +1,60 @@
-#!/usr/bin/env sage
+#!/usr/bin/env sage -python
 #-*- coding:utf-8 -*-
 
 from sage.all import *
 
+import argparse
+import pathlib
 import sys, os, string
+
+from random import sample
 from itertools import product
 
 from sbox import sbox, rsbox
 from reader import Reader
 
+
+parser = argparse.ArgumentParser(
+    description='Apply "Linear Algebraic Attack (LDA)" on pre-recorded traces.',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+parser.add_argument(
+    'trace_dir', type=pathlib.Path,
+    help="path to directory with trace/plaintext/ciphertext files")
+parser.add_argument(
+    '-T', '--n-traces', type=int, default=100,
+    help="number of traces to use in the attack"
+)
+parser.add_argument(
+    '-w', '--window', type=int, default=2048,
+    help="sliding window size"
+)
+parser.add_argument(
+    '-s', '--step', type=int, default=1024,
+    help="sliding window step",
+)
+parser.add_argument(
+    '--masks', default="1,2,4,8,16,32,64,128",
+    help=(
+        "linear masks to consider"
+        " (comma separated ints, or 'all', or 'random16', 'random32')"
+    )
+)
+parser.add_argument(
+    '-o', '--order', type=int, default=1,
+    help="attack order (1 or 2)",
+)
+parser.add_argument(
+    '--pos', default="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
+    help="byte positions to attack",
+)
+
+# parser.add_argument(
+#     '--candidate-limit', type=int, default=8,
+#     help="limit of key candidates per S-box",
+# )
+
+args = parser.parse_args()
 
 #== Configuration
 

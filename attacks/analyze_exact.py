@@ -1,11 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import pathlib
 import sys, os, string
 
 from random import sample
-
 from itertools import product
 from collections import defaultdict
 
@@ -14,7 +13,7 @@ from reader import Reader
 
 
 parser = argparse.ArgumentParser(
-    description='Apply "Exact Matching Attack" on pre-recorder traces.',
+    description='Apply "Exact Matching Attack" on pre-recorded traces.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
@@ -44,7 +43,7 @@ parser.add_argument(
     help="attack order (1 or 2)",
 )
 parser.add_argument(
-    '--pos', default="1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
+    '--pos', default="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15",
     help="byte positions to attack",
 )
 

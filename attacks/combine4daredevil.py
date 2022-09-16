@@ -1,38 +1,70 @@
-#!/usr/bin/env python2
-#-*- coding:utf-8 -*-
+#!/usr/bin/env python3
 
-import sys
-import os
+import argparse
+import pathlib
+import sys, os, string
 
-n = int(sys.argv[1])
+from random import sample
+
+from itertools import product
+from collections import defaultdict
+
+from sbox import sbox, rsbox
+from reader import Reader
+
+
+parser = argparse.ArgumentParser(
+    description='Apply "Exact Matching Attack" on pre-recorder traces.',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+parser.add_argument(
+    'trace_dir', type=pathlib.Path,
+    help="path to directory with trace/plaintext/ciphertext files")
+parser.add_argument(
+    '-T', '--n-traces', type=int, default=500,
+    help="number of traces to combine"
+)
+
+args = parser.parse_args()
+
+T = args.n_traces
+
 packed = True
 
 pts = []
 cts = []
 
-out_pt = open("./traces/all.input", "w")
-out_ct = open("./traces/all.output", "w")
-out_t = open("./traces/all.bin", "w")
+fname_pt = args.trace_dir / "all.input"
+fname_ct = args.trace_dir / "all.output"
+fname_t = args.trace_dir / "all.bin"
+
+out_pt = open(fname_pt, "wb")
+out_ct = open(fname_ct, "wb")
+out_t = open(fname_t, "wb")
 
 nsamples = None
 
 def expand_byte(b):
     res = []
-    b = ord(b)
-    for i in xrange(8):
-        res.append("\x00\x01"[(b >> (7 - i & 7)) & 1])
-    return "".join(res)
+    for i in range(8):
+        res.append(b"\x00\x01"[(b >> (7 - i & 7)) & 1])
+    return bytes(res)
 
-for i in xrange(n):
-    fpt = "./traces/%04d.pt" % i
-    fct = "./traces/%04d.ct" % i
-    ft = "./traces/%04d.bin" % i
 
-    with open(fpt) as f: pt = f.read(16)
-    with open(fct) as f: ct = f.read(16)
-    with open(ft) as f: trace = f.read()
+for i in range(T):
+    fpt = args.trace_dir / ("%04d.pt" % i)
+    fct = args.trace_dir / ("%04d.ct" % i)
+    ft = args.trace_dir / ("%04d.bin" % i)
+
+    with open(fpt, "rb") as f:
+        pt = f.read(16)
+    with open(fct, "rb") as f:
+        ct = f.read(16)
+    with open(ft, "rb") as f:
+        trace = f.read()
+
     if packed:
-        trace = "".join(map(expand_byte, trace))
+        trace = b"".join(map(expand_byte, trace))
 
     if nsamples is None:
         nsamples = len(trace)
@@ -43,22 +75,22 @@ for i in xrange(n):
     out_ct.write(ct)
     out_t.write(trace)
 
-print n, "traces"
+print(T, "traces")
 
-config = """
+config = f"""
 [Traces]
 files=1
 trace_type=i
 transpose=true
 index=0
-nsamples=%(nsamples)d
-trace=traces/all.bin %(n)d %(nsamples)d
+nsamples={nsamples}
+trace={fname_t} {T} {nsamples}
 
 [Guesses]
 files=1
 guess_type=u
 transpose=true
-guess=traces/all.input %(n)d 16
+guess={fname_pt} {T} 16
 
 [General]
 threads=8
@@ -71,9 +103,9 @@ round=0
 bitnum=0
 bytenum=all
 //correct_key=???
-memory=16G
+memory=4G
 top=20
-""" % dict(nsamples=nsamples, n=n)
+"""
 
 with open("daredevil.config", "w") as f:
     f.write(config)

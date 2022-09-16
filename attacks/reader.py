@@ -1,5 +1,6 @@
 import os
 from collections import deque
+from pathlib import Path
 
 
 class Reader(object):
@@ -10,6 +11,7 @@ class Reader(object):
     def __init__(self, ntraces, window, step=None,
                        packed=True, reverse=False, dir="./traces"):
 
+        dir = Path(dir)
         self.packed = packed
 
         self.pts = []
@@ -20,9 +22,9 @@ class Reader(object):
         self.ntraces = int(ntraces)
         assert self.ntraces >= 1
         for i in range(self.ntraces):
-            f_trace = os.path.join(dir, self.TRACE_FILENAME_FORMAT % i)
-            f_pt = os.path.join(dir, self.PLAINTEXT_FILENAME_FORMAT % i)
-            f_ct = os.path.join(dir, self.CIPHERTEXT_FILENAME_FORMAT % i)
+            f_trace = dir / (self.TRACE_FILENAME_FORMAT % i)
+            f_pt = dir / (self.PLAINTEXT_FILENAME_FORMAT % i)
+            f_ct = dir / (self.CIPHERTEXT_FILENAME_FORMAT % i)
 
             self.pts.append(open(f_pt, "rb").read())
             self.cts.append(open(f_ct, "rb").read())
