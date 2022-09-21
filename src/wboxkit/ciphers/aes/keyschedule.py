@@ -1,6 +1,4 @@
-#-*- coding:utf-8 -*-
-
-from wbkit.containers import Vector
+from wboxkit.containers import Vector
 
 from .sbox import bitSbox
 

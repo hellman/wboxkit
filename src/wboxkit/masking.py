@@ -7,7 +7,7 @@ import logging
 from circkit.transformers.core import CircuitTransformer
 from circkit.array import Array
 
-from wbkit.containers import Rect
+from wboxkit.containers import Rect
 
 
 log = logging.getLogger(__name__)

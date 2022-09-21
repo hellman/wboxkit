@@ -1,6 +1,4 @@
-#-*- coding:utf-8 -*-
-
-from wbkit.containers import Vector, Rect
+from wboxkit.containers import Vector, Rect
 
 from .sbox import bitSbox
 from .linear import ShiftRow, MixColumn
