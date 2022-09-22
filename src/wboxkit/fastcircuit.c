@@ -6,27 +6,20 @@
 #include <time.h>
 #include "fastcircuit.h"
 
-#ifdef _WIN32
-#define LIBRARY_API __declspec(dllexport)
-#else
-#define LIBRARY_API
-#endif
 
-
-FILE *ftrace = NULL;
-
-int RANDOM_ENABLED = 1;
+EXPORT int RANDOM_ENABLED = 1;
 
 // Randomness
-void __attribute__ ((constructor)) set_seed_time() {
+EXPORT void __attribute__ ((constructor)) set_seed_time() {
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
     srandom(spec.tv_sec);
     srandom(random() ^ spec.tv_nsec);
 }
-LIBRARY_API void set_seed(uint64_t seed) {
+EXPORT void set_seed(uint64_t seed) {
     srandom(seed);
 }
+
 static inline WORD randbit() {
     if (RANDOM_ENABLED)
         return random() ^ (((uint64_t)random()) << 32);
@@ -35,7 +28,7 @@ static inline WORD randbit() {
 }
 
 
-LIBRARY_API Circuit *load_circuit(char *fname) {
+EXPORT Circuit *load_circuit(char *fname) {
     if (!fname) {
         fprintf(stderr, "no filename provided\n");
         return NULL;
@@ -96,7 +89,7 @@ fail:
     return NULL;
 }
 
-LIBRARY_API void free_circuit(Circuit *C) {
+EXPORT void free_circuit(Circuit *C) {
     free(C->input_addr);
     free(C->output_addr);
     free(C->opcodes);
@@ -114,7 +107,7 @@ static inline WORD io_bit(int bit) {
     bit += 7 - lo;
     return bit;
 }
-LIBRARY_API int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch) {
+EXPORT int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch) {
     CircuitInfo *I = &C->info;
     WORD *ram = C->ram;
     bzero(ram, I->memory);

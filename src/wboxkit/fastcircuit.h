@@ -1,4 +1,12 @@
+#ifndef WBOXKIT_FASTCIRCUIT_H
+#define WBOXKIT_FASTCIRCUIT_H
 #include <stdint.h>
+
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
 // depends on the need of batch executions, may be reduced to char (e.g., for challenge submission)
 typedef uint64_t WORD;
@@ -27,10 +35,10 @@ typedef struct {
 
 enum OP {_, XOR, AND, OR, NOT, RANDOM};
 
-void __attribute__ ((constructor)) set_seed_time();
-void set_seed(uint64_t seed);
-WORD randbit();
+EXPORT void __attribute__ ((constructor)) set_seed_time();
+EXPORT void set_seed(uint64_t seed);
 
-Circuit *load_circuit(char *fname);
-void free_circuit(Circuit *C);
-int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch);
+EXPORT Circuit *load_circuit(char *fname);
+EXPORT void free_circuit(Circuit *C);
+EXPORT int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch);
+#endif

@@ -9,7 +9,8 @@ from ctypes import (
 
 from pathlib import Path
 
-path = Path(__file__).resolve().parent.parent.parent / "lib/libfastcircuit.so"
+path = Path(__file__).resolve().parent / "fastcircuit.so"
+
 lib = cdll.LoadLibrary(path)
 
 lib.load_circuit.restype = c_void_p
