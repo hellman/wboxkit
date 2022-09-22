@@ -6,6 +6,13 @@
 #include <time.h>
 #include "fastcircuit.h"
 
+#ifdef _WIN32
+#define LIBRARY_API __declspec(dllexport)
+#else
+#define LIBRARY_API
+#endif
+
+
 FILE *ftrace = NULL;
 
 int RANDOM_ENABLED = 1;
@@ -17,10 +24,10 @@ void __attribute__ ((constructor)) set_seed_time() {
     srandom(spec.tv_sec);
     srandom(random() ^ spec.tv_nsec);
 }
-void set_seed(uint64_t seed) {
+LIBRARY_API void set_seed(uint64_t seed) {
     srandom(seed);
 }
-WORD randbit() {
+static inline WORD randbit() {
     if (RANDOM_ENABLED)
         return random() ^ (((uint64_t)random()) << 32);
     else
@@ -28,7 +35,7 @@ WORD randbit() {
 }
 
 
-Circuit *load_circuit(char *fname) {
+LIBRARY_API Circuit *load_circuit(char *fname) {
     if (!fname) {
         fprintf(stderr, "no filename provided\n");
         return NULL;
@@ -89,7 +96,7 @@ fail:
     return NULL;
 }
 
-void free_circuit(Circuit *C) {
+LIBRARY_API void free_circuit(Circuit *C) {
     free(C->input_addr);
     free(C->output_addr);
     free(C->opcodes);
@@ -101,13 +108,13 @@ void free_circuit(Circuit *C) {
 Bits in bytes: MSB to LSB
 Bytes in word: LSB to MSB, because will be packed as Little Endian
 */
-WORD io_bit(int bit) {
+static inline WORD io_bit(int bit) {
     int lo = bit & 7;
     bit -= lo;
     bit += 7 - lo;
     return bit;
 }
-int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch) {
+LIBRARY_API int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_filename, int batch) {
     CircuitInfo *I = &C->info;
     WORD *ram = C->ram;
     bzero(ram, I->memory);
