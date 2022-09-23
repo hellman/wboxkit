@@ -31,12 +31,18 @@ setup(
     name='wboxkit',
     version='0.2.0',
     description='White-box Design & Cryptanalyis Kit',
+    keywords='white-box cryptography design cryptanalyis circuits',
+
     author='Aleksei Udovenko',
     author_email='aleksei@affine.group',
     url='https://github.com/hellman/wboxkit',
+    license='MIT',
 
     packages=find_packages("src"),
     package_dir={'': 'src'},
+
+    python_requires='>=3',
+    install_requires=[],
 
     ext_modules=[
         CTypesExtension(
@@ -52,5 +58,16 @@ setup(
             'wboxkit.exact=wboxkit.attacks.exact:main',
             'wboxkit.lda=wboxkit.attacks.lda:main',
         ],
-    }
+    },
+
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+
+        'Intended Audience :: Science/Research',
+        'Topic :: Security :: Cryptography',
+
+        'License :: OSI Approved :: MIT License',
+
+        'Programming Language :: Python :: 3',
+    ],
 )
