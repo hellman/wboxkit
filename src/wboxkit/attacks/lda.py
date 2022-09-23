@@ -9,6 +9,8 @@ import sys, os, string
 
 from collections import defaultdict
 
+from bitarray import frozenbitarray
+
 from wboxkit.attacks.reader import Reader
 
 
@@ -38,14 +40,15 @@ def main():
     cipher = args.cipher.lower().replace(".", "_")
     cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
     cipher_targets = cipher_mod.Targets.from_argparser(
-        parser, as_vectors=True,
+        parser,
+        as_vectors=False,
     )
 
     R = Reader.from_argparser(
         parser,
         default_n_traces=256 + 50,
         default_window=256,
-        as_vectors=True,
+        as_vectors=False,
     )
     if R.ntraces <= R.window:
         print(
@@ -53,6 +56,9 @@ def main():
             R.ntraces, "<=", R.window,
         )
         quit()
+
+    # ensure all args are known
+    args = parser.parse_args()
 
     if args.help:
         parser.print_help()
@@ -74,14 +80,10 @@ def main():
     print( "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes) )
 
     targets = cipher_targets.generate_targets(R)
-    targets = [
-        (vector(GF(2), t), kinfo)
-        for t, kinfo in targets
-    ]
-    target_mat = matrix(GF(2), [t for t, kinfo in targets])
-    vector_ones = vector(GF(2), [1] * R.ntraces)
 
     print( "Generated %d target vectors" % len(targets) )
+
+    vector_ones = frozenbitarray([1] * R.ntraces)
 
     #== Read traces and analyze
     candidates = [set() for _ in range(16)]
@@ -100,23 +102,36 @@ def main():
 
         columns = [
             vec for vec in vectors_rev
-            if vec not in (0, vector_ones)
+            if vec.count(0) and vec.count(1)
         ]
-        mat = matrix(GF(2), columns)
+        if not columns:
+            continue
 
-        # trick to use kernel of M for quick verification of solution
-        parity_checker = mat.right_kernel().matrix().transpose()
-        assert parity_checker.nrows() and parity_checker.ncols()
-        check = target_mat * parity_checker
-        check = map(bool, check.rows())
-        for parity, (target, kinfo) in zip(check, targets):
-            if parity:
+        # we now need sage only for right kernel
+        # and solve_left kinfo recovery below...
+        trace_matrix = matrix(GF(2), columns)
+
+        parity_checks = trace_matrix.right_kernel().matrix()
+        assert parity_checks.nrows() and parity_checks.ncols()  # regression
+        parity_checks = [frozenbitarray(row) for row in parity_checks]
+
+        # optimized implementation : check bit-by-bit, O(n^3 + nk)
+        for target, kinfo in targets:
+            match = True
+            nm = 0
+            for row in parity_checks:
+                #if row * target:
+                if (row & target).count(1) & 1:
+                    match = False
+                    break
+                nm += 1
+            if not match:
                 continue
 
             # can be done more efficiently using LU factors of mat (shared with left_kernel)
             # but happens only when the key is found
             # so optimization is not necessary
-            sol = mat.solve_left(target)
+            sol = trace_matrix.solve_left(vector(GF(2), target))
             # assert sol * mat == target
 
             si, lin, k, const1 = kinfo
