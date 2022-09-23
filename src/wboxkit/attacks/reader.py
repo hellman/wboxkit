@@ -9,17 +9,22 @@ class Reader(object):
     CIPHERTEXT_FILENAME_FORMAT = "%04d.ct"
 
     @classmethod
-    def from_argparser(cls, parser):
+    def from_argparser(
+        cls,
+        parser,
+        default_n_traces=100,
+        default_window=2048,
+    ):
         parser.add_argument(
             'trace_dir', type=Path,
             help="path to directory with trace/plaintext/ciphertext files")
 
         parser.add_argument(
-            '-T', '--n-traces', type=int, default=100,
+            '-T', '--n-traces', type=int, default=default_n_traces,
             help="number of traces to use in the attack"
         )
         parser.add_argument(
-            '-w', '--window', type=int, default=2048,
+            '-w', '--window', type=int, default=default_window,
             help="sliding window size"
         )
         parser.add_argument(
@@ -62,6 +67,8 @@ class Reader(object):
 
         self.trace_bytes = None
         self.ntraces = int(ntraces)
+        self.window = int(window)
+
         assert self.ntraces >= 1
         for i in range(self.ntraces):
             f_trace = dir / (self.TRACE_FILENAME_FORMAT % i)

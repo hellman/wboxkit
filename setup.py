@@ -48,8 +48,9 @@ setup(
 
     entry_points = {
         'console_scripts': [
-            'wboxkit.trace=wboxkit.attacks.trace:main'
-            'wboxkit.exact=wboxkit.attacks.exact:main'
+            'wboxkit.trace=wboxkit.attacks.trace:main',
+            'wboxkit.exact=wboxkit.attacks.exact:main',
+            'wboxkit.lda=wboxkit.attacks.lda:main',
         ],
     }
 )

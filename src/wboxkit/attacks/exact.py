@@ -54,9 +54,6 @@ def main():
         print("unsupported order", args.order, "(only 1 and 2 now)")
         quit()
 
-    # attack ct-side S-Box?
-    CT_SIDE = R.reverse
-
     print( "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes) )
 
     targets = cipher_targets.generate_targets(R)
