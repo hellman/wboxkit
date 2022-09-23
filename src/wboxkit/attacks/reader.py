@@ -27,7 +27,7 @@ class Reader(object):
             help="sliding window step (default: window/4)",
         )
         # parser.add_argument(
-        #     '--reverse', action="toggle_true",
+        #     '--reverse', action="store_true",
         #     help="attack order (1 or 2)",
         # )
 

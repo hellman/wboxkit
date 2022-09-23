@@ -67,7 +67,7 @@ class AESTargets:
         sbox, isbox = self.SBOX, self.iSBOX
         ct_side = reader.reverse
 
-        full = 2**reader.ntraces - 1
+        ones = self.vector_ones = 2**reader.ntraces - 1
 
         targets = []
         for si, lin, k in product(self.indexes, self.masks, self.charset):
@@ -88,7 +88,7 @@ class AESTargets:
                 target = (target << 1) | scalar_bin(x, lin)
 
             targets.append((target, (si, lin, k, 0)))
-            targets.append((target ^ full, (si, lin, k, 1)))
+            targets.append((target ^ ones, (si, lin, k, 1)))
         return targets
 
 

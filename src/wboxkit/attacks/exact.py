@@ -11,10 +11,17 @@ from wboxkit.attacks.reader import Reader
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Apply "Exact Matching Attack" on pre-recorded traces.',
+        description=(
+            'Apply "Exact Matching Attack" on pre-recorded traces.'
+            #'Note: Changing the cipher may change the parameters',
+        ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False,
     )
 
+    parser.add_argument(
+        "-h", "--help", action="store_true",
+    )
     parser.add_argument(
         '-o', '--order', type=int, default=1,
         help="maximum attack order (1 or 2)",
@@ -29,13 +36,17 @@ def main():
     cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
     cipher_targets = cipher_mod.Targets.from_argparser(parser)
 
+    R = Reader.from_argparser(parser)
+
+    if args.help:
+        parser.print_help()
+        quit()
 
     # go from the end of the traces if we attack last S-Boxes ?
     REVERSE = False # not supported yet
     STOP_ON_FIRST_MATCH = 0
     ONE_CANDIDATE_PER_SBOX = 0
 
-    R = Reader.from_argparser(parser)
 
     # second order should break 1-st order linear masking
     ORDER = args.order
@@ -49,7 +60,7 @@ def main():
     print( "Total traces:", R.ntraces, "of size", "%.1fK bits (%d)" % (R.trace_bytes / 1000.0, R.trace_bytes) )
 
     targets = cipher_targets.generate_targets(R)
-
+    vector_ones = cipher_targets.vector_ones
 
     print( "Generated %d target vectors" % len(targets) )
     g_candidates = [set() for _ in range(16)]
@@ -97,7 +108,7 @@ def main():
             if ORDER == 2:
                 # shared in 2 shares
                 for v1 in vectors_rev:
-                    if v1 in (0, MASK):
+                    if v1 in (0, vector_ones):
                         continue
                     v2 = target ^ v1
                     if v2 in vectors_rev:
