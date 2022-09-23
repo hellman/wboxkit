@@ -4,3 +4,4 @@ tutorials/circuits
 *.bin
 Daredevil
 build
+traces/

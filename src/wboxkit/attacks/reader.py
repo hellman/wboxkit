@@ -8,6 +8,48 @@ class Reader(object):
     PLAINTEXT_FILENAME_FORMAT = "%04d.pt"
     CIPHERTEXT_FILENAME_FORMAT = "%04d.ct"
 
+    @classmethod
+    def from_argparser(cls, parser):
+        parser.add_argument(
+            'trace_dir', type=Path,
+            help="path to directory with trace/plaintext/ciphertext files")
+
+        parser.add_argument(
+            '-T', '--n-traces', type=int, default=100,
+            help="number of traces to use in the attack"
+        )
+        parser.add_argument(
+            '-w', '--window', type=int, default=2048,
+            help="sliding window size"
+        )
+        parser.add_argument(
+            '-s', '--step', type=int, default=0,
+            help="sliding window step (default: window/4)",
+        )
+        # parser.add_argument(
+        #     '--reverse', action="toggle_true",
+        #     help="attack order (1 or 2)",
+        # )
+
+        args, unknown = parser.parse_known_args()
+
+        if args.step > args.window:
+            print("step larger than the window size, reducing to window/4")
+            args.step = args.window // 4
+        if args.step <= 0:
+            args.step = args.window // 4
+        args.step = max(1, args.step)
+
+        REVERSE=False
+        return cls(
+            ntraces=args.n_traces,
+            window=args.window,
+            step=args.step,
+            packed=True,
+            reverse=REVERSE,
+            dir=args.trace_dir,
+        )
+
     def __init__(self, ntraces, window, step=None,
                        packed=True, reverse=False, dir="./traces"):
 

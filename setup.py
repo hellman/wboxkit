@@ -45,4 +45,10 @@ setup(
         )
     ],
     cmdclass={'build_ext': build_ext},
+
+    entry_points = {
+        'console_scripts': [
+            'wboxkit.exact=wboxkit.attacks.exact:main'
+        ],
+    }
 )
