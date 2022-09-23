@@ -42,7 +42,7 @@ setup(
     package_dir={'': 'src'},
 
     python_requires='>=3',
-    install_requires=[],
+    install_requires=['bitarray'],
 
     ext_modules=[
         CTypesExtension(

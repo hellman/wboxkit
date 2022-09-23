@@ -2,6 +2,9 @@ import os
 from collections import deque
 from pathlib import Path
 
+from bitarray import frozenbitarray, bitarray
+
+
 
 class Reader(object):
     TRACE_FILENAME_FORMAT = "%04d.bin"
@@ -14,6 +17,7 @@ class Reader(object):
         parser,
         default_n_traces=100,
         default_window=2048,
+        as_vectors=False,
     ):
         parser.add_argument(
             'trace_dir', type=Path,
@@ -53,10 +57,19 @@ class Reader(object):
             packed=True,
             reverse=REVERSE,
             dir=args.trace_dir,
+            as_vectors=as_vectors,
         )
 
-    def __init__(self, ntraces, window, step=None,
-                       packed=True, reverse=False, dir="./traces"):
+    def __init__(
+        self,
+        ntraces,
+        window,
+        step=None,
+        packed=True,
+        reverse=False,
+        dir="./traces",
+        as_vectors=False,
+    ):
 
         dir = Path(dir)
         self.packed = packed
@@ -109,8 +122,14 @@ class Reader(object):
         # may be ceil? not accurate!
         self.num_windows = (self.trace_bytes - self.window_bytes + self.step_bytes - 1) // self.step_bytes + 1
 
-        # not sure if working with longs is faster than with arrays
-        # or some other structure, may be even makes sense to write C backend
+        if as_vectors:
+            from sage.all import vector, GF
+
+            self.cls_array = lambda v: vector(GF(2), v)
+            self.cls_array_freeze = lambda v: v.set_immutable() or v
+        else:
+            self.cls_array = bitarray
+            self.cls_array_freeze = frozenbitarray
 
     def __iter__(self):
         self.vectors = deque()
@@ -135,19 +154,29 @@ class Reader(object):
 
 
     def advance(self, num_bytes):
-        self.new_vectors = [0] * (num_bytes * 8)
-        for fd in self.fds:
+        self.new_vectors = [
+            self.cls_array(self.ntraces)
+            for _ in range(num_bytes * 8)
+        ]
+        l = None
+        for ifd, fd in enumerate(self.fds):
             data = fd.read(num_bytes)
-            self.process_window(data)
-        self.new_vectors = self.new_vectors[:len(data)*8]
+            if l is None:
+                l = len(data)
+            assert l == len(data)
+            self.process_window(ifd, data)
 
-    def process_window(self, data):
+        self.new_vectors = [
+            self.cls_array_freeze(vec)
+            for vec in self.new_vectors[:len(data)*8]
+        ]
+
+    def process_window(self, itrace, data):
         vectors = self.new_vectors
         if not self.packed:
             # 1 bit in byte
             for i, b in enumerate(data):
-                val = b & 1
-                vectors[i] = (vectors[i] << 1) | val
+                vectors[i][itrace] = b & 1
             assert b in "\x00\x01", "sure not packed?"
         else:
             # 8 bits in byte (packed)
@@ -155,5 +184,4 @@ class Reader(object):
                 b = b
                 for j in range(8):
                     id = (i << 3) | j
-                    bit = (b >> (7 - j)) & 1
-                    vectors[id] = (vectors[id] << 1) | bit
+                    vectors[id][itrace] = (b >> (7 - j)) & 1

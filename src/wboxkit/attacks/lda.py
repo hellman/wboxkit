@@ -37,12 +37,15 @@ def main():
     args, unknown = parser.parse_known_args()
     cipher = args.cipher.lower().replace(".", "_")
     cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
-    cipher_targets = cipher_mod.Targets.from_argparser(parser)
+    cipher_targets = cipher_mod.Targets.from_argparser(
+        parser, as_vectors=True,
+    )
 
     R = Reader.from_argparser(
         parser,
         default_n_traces=256 + 50,
         default_window=256,
+        as_vectors=True,
     )
     if R.ntraces <= R.window:
         print(
@@ -72,15 +75,13 @@ def main():
 
     targets = cipher_targets.generate_targets(R)
     targets = [
-        (vector(GF(2), tobin(t, R.ntraces)), kinfo)
+        (vector(GF(2), t), kinfo)
         for t, kinfo in targets
     ]
     target_mat = matrix(GF(2), [t for t, kinfo in targets])
     vector_ones = vector(GF(2), [1] * R.ntraces)
 
     print( "Generated %d target vectors" % len(targets) )
-    g_candidates = [set() for _ in range(16)]
-    n_matches = [0] * 16
 
     #== Read traces and analyze
     candidates = [set() for _ in range(16)]
@@ -98,8 +99,7 @@ def main():
         key_found = False
 
         columns = [
-            list(tobin(vec, R.ntraces))
-            for vec in vectors_rev
+            vec for vec in vectors_rev
             if vec not in (0, vector_ones)
         ]
         mat = matrix(GF(2), columns)

@@ -1,13 +1,15 @@
 from random import randrange, sample
 from itertools import product
 
+from bitarray import frozenbitarray, bitarray
+
 
 class AESTargets:
     from wboxkit.ciphers.aes.aes import sbox as SBOX
     from wboxkit.ciphers.aes.aes import rsbox as iSBOX
 
     @classmethod
-    def from_argparser(cls, parser):
+    def from_argparser(cls, parser, as_vectors=False):
         parser.add_argument(
             '--masks', default="1,2,4,8,16,32,64,128",
             help=(
@@ -54,25 +56,43 @@ class AESTargets:
         return cls(
             indexes=BYTE_INDICES,
             masks=LINS,
+            as_vectors=as_vectors,
         )
 
-    def __init__(self, indexes, masks):
+    def __init__(self, indexes, masks, as_vectors=False):
         self.indexes = tuple(map(int, indexes))
         self.masks = tuple(map(int, masks))
         self.charset = range(256)
 
+        self.as_vectors = as_vectors
+        if as_vectors:
+            from sage.all import vector, GF
+
+            self.cls_array = lambda v: vector(GF(2), v)
+            self.cls_array_freeze = lambda v: v.set_immutable() or v
+        else:
+            self.cls_array = bitarray
+            self.cls_array_freeze = frozenbitarray
 
     def generate_targets(self, reader):
         """Generate predicted vectors from plaintext/ciphertext and key guess"""
         sbox, isbox = self.SBOX, self.iSBOX
         ct_side = reader.reverse
 
-        ones = self.vector_ones = 2**reader.ntraces - 1
+        ones = self.cls_array([1] * reader.ntraces)
+
+        self.vector_ones = ones = self.cls_array_freeze(ones)
+
+        scalar_map = [
+            [scalar_bin(x, lin) for x in range(256)]
+            for lin in range(256)
+        ]
 
         targets = []
         for si, lin, k in product(self.indexes, self.masks, self.charset):
-            target = 0
-            for p, c in zip(reader.pts, reader.cts):
+            target = self.cls_array(reader.ntraces)
+            scalar_lin = scalar_map[lin]
+            for itrace, (p, c) in enumerate(zip(reader.pts, reader.cts)):
                 if k is None:
                     if ct_side:
                         x = c[si]
@@ -85,10 +105,15 @@ class AESTargets:
                     else:
                         x = p[si]
                         x = sbox[x ^ k]
-                target = (target << 1) | scalar_bin(x, lin)
+                #target[itrace] = scalar_bin(x, lin)
+                target[itrace] = scalar_lin[x]
 
+            target = self.cls_array_freeze(target)
             targets.append((target, (si, lin, k, 0)))
-            targets.append((target ^ ones, (si, lin, k, 1)))
+            if self.as_vectors:
+                targets.append((target + ones, (si, lin, k, 1)))
+            else:
+                targets.append((target ^ ones, (si, lin, k, 1)))
         return targets
 
 
