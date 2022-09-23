@@ -29,7 +29,7 @@ class build_ext(build_ext_orig):
 
 setup(
     name='wboxkit',
-    version='0.2.0',
+    version='0.3.0',
     description='White-box Design & Cryptanalyis Kit',
     keywords='white-box cryptography design cryptanalyis circuits',
 
