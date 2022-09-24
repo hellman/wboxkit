@@ -24,7 +24,7 @@ class Reader(object):
             help="path to directory with trace/plaintext/ciphertext files")
 
         parser.add_argument(
-            '-T', '--n-traces', type=int, default=default_n_traces,
+            '-t', '-T', '--n-traces', type=int, default=default_n_traces,
             help="number of traces to use in the attack"
         )
         parser.add_argument(
