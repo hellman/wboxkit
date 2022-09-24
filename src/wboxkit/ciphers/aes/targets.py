@@ -9,7 +9,7 @@ class AESTargets:
     from wboxkit.ciphers.aes.aes import rsbox as iSBOX
 
     @classmethod
-    def from_argparser(cls, parser, as_vectors=False):
+    def add_arguments(cls, parser):
         parser.add_argument(
             '--masks', default="1,2,4,8,16,32,64,128",
             help=(
@@ -22,8 +22,8 @@ class AESTargets:
             help="byte positions to attack",
         )
 
-        args, unknown = parser.parse_known_args()
-
+    @classmethod
+    def from_args(cls, args, as_vectors=False):
         # which/how many  S-Boxes to attack
         BYTE_INDICES = tuple(map(int, args.pos.split(",")))
         assert set(BYTE_INDICES) <= set(range(16))

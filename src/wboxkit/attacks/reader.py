@@ -12,12 +12,11 @@ class Reader(object):
     CIPHERTEXT_FILENAME_FORMAT = "%04d.ct"
 
     @classmethod
-    def from_argparser(
+    def add_arguments(
         cls,
         parser,
         default_n_traces=100,
         default_window=2048,
-        as_vectors=False,
     ):
         parser.add_argument(
             'trace_dir', type=Path,
@@ -40,8 +39,9 @@ class Reader(object):
         #     help="attack order (1 or 2)",
         # )
 
-        args, unknown = parser.parse_known_args()
 
+    @classmethod
+    def from_args(cls, args, as_vectors=False):
         if args.step > args.window:
             print("step larger than the window size, reducing to window/4")
             args.step = args.window // 4

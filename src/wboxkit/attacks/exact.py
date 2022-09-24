@@ -32,21 +32,28 @@ def main():
     )
 
     args, unknown = parser.parse_known_args()
+
+    Reader.add_arguments(parser)
+
     cipher = args.cipher.lower().replace(".", "_")
     cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
-    cipher_targets = cipher_mod.Targets.from_argparser(parser)
-
-    R = Reader.from_argparser(parser)
+    cipher_targets_cls = cipher_mod.Targets
+    cipher_targets_cls.add_arguments(parser)
 
     if args.help:
         parser.print_help()
         quit()
 
+    # ensure all args are known
+    args = parser.parse_args()
+
+    R = Reader.from_args(args)
+    cipher_targets = cipher_targets_cls.from_args(args)
+
     # go from the end of the traces if we attack last S-Boxes ?
     REVERSE = False # not supported yet
     STOP_ON_FIRST_MATCH = 0
     ONE_CANDIDATE_PER_SBOX = 0
-
 
     # second order should break 1-st order linear masking
     ORDER = args.order

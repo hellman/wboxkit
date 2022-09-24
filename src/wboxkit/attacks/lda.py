@@ -37,31 +37,33 @@ def main():
     )
 
     args, unknown = parser.parse_known_args()
-    cipher = args.cipher.lower().replace(".", "_")
-    cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
-    cipher_targets = cipher_mod.Targets.from_argparser(
-        parser,
-        as_vectors=False,
-    )
 
-    R = Reader.from_argparser(
+    Reader.add_arguments(
         parser,
         default_n_traces=256 + 50,
         default_window=256,
-        as_vectors=False,
     )
-    if R.ntraces <= R.window:
-        print(
-            "error: ntraces <= window (no redundancy):",
-            R.ntraces, "<=", R.window,
-        )
+
+    cipher = args.cipher.lower().replace(".", "_")
+    cipher_mod = importlib.import_module("." + cipher, package="wboxkit.ciphers")
+    cipher_targets_cls = cipher_mod.Targets
+    cipher_targets_cls.add_arguments(parser)
+
+    if args.help:
+        parser.print_help()
         quit()
 
     # ensure all args are known
     args = parser.parse_args()
 
-    if args.help:
-        parser.print_help()
+    R = Reader.from_args(args, as_vectors=False)
+    cipher_targets = cipher_targets_cls.from_args(args)
+
+    if R.ntraces <= R.window:
+        print(
+            "error: ntraces <= window (no redundancy):",
+            R.ntraces, "<=", R.window,
+        )
         quit()
 
     # go from the end of the traces if we attack last S-Boxes ?
