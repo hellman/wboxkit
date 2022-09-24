@@ -1,0 +1,6 @@
+exclude .gitignore
+prune circuits
+prune traces
+prune tutorials
+
+recursive-include src/* *.h

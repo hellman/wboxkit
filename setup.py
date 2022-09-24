@@ -47,7 +47,8 @@ setup(
     ext_modules=[
         CTypesExtension(
             'wboxkit.fastcircuit',
-            ['src/wboxkit/fastcircuit.c'],
+            sources=['src/wboxkit/fastcircuit.c'],
+            depends=['src/wboxkit/fastcircuit.h'],
         )
     ],
     cmdclass={'build_ext': build_ext},
