@@ -29,7 +29,7 @@ class build_ext(build_ext_orig):
 
 setup(
     name='wboxkit',
-    version='0.3.0',
+    version='0.4.0',
     description='White-box Design & Cryptanalyis Kit',
     keywords='white-box cryptography design cryptanalyis circuits',
 
@@ -42,7 +42,7 @@ setup(
     package_dir={'': 'src'},
 
     python_requires='>=3',
-    install_requires=['bitarray'],
+    install_requires=['bitarray', 'circkit', 'binteger'],
 
     ext_modules=[
         CTypesExtension(
