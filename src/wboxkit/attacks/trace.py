@@ -35,7 +35,7 @@ def main():
     )
 
     parser.add_argument(
-        '-T', '--n-traces', type=int, default=512,
+        '-t', '-T', '--n-traces', type=int, default=512,
         help="number of traces to record"
     )
 
