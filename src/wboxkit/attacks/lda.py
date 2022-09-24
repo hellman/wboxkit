@@ -1,5 +1,4 @@
 #!/usr/bin/env sage -python
-#-*- coding:utf-8 -*-
 
 from sage.all import Integer, vector, GF, matrix
 
