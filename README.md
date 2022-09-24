@@ -35,7 +35,7 @@ The package installed a few scripts:
 
 ## Tutorials
 
-- [Tutorial 1 - Circuits](./tutorials/Tutorial 1 - Circuits.ipynb)
-- [Tutorial 2 - Countermeasures](./tutorials/Tutorial 2 - Countermeasures.ipynb)
-- [Tutorial 3 - Tracing](./tutorials/Tutorial 3 - Tracing.ipynb)
-- [Tutorial 4 - Attacks](./tutorials/Tutorial 4 - Attacks.ipynb)
+- [Tutorial 1 - Circuits](./tutorials/Tutorial%201%20-%20Circuits.ipynb)
+- [Tutorial 2 - Countermeasures](./tutorials/Tutorial%202%20-%20Countermeasures.ipynb)
+- [Tutorial 3 - Tracing](./tutorials/Tutorial%203%20-%20Tracing.ipynb)
+- [Tutorial 4 - Attacks](./tutorials/Tutorial%204%20-%20Attacks.ipynb)
