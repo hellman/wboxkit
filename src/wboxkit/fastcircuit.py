@@ -9,7 +9,7 @@ from ctypes import (
 
 from pathlib import Path
 
-path = Path(__file__).resolve().parent / "fastcircuit.so"
+path = Path(__file__).resolve().parent / "libfastcircuit.so"
 
 lib = cdll.LoadLibrary(path)
 

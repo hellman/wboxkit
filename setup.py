@@ -29,7 +29,7 @@ class build_ext(build_ext_orig):
 
 setup(
     name='wboxkit',
-    version='0.4.0',
+    version='0.4.1',
     description='White-box Design & Cryptanalyis Kit',
     keywords='white-box cryptography design cryptanalyis circuits',
 
@@ -46,7 +46,7 @@ setup(
 
     ext_modules=[
         CTypesExtension(
-            'wboxkit.fastcircuit',
+            'wboxkit.libfastcircuit',
             sources=['src/wboxkit/fastcircuit.c'],
             depends=['src/wboxkit/fastcircuit.h'],
         )
