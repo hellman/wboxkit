@@ -31,3 +31,11 @@ The package installed a few scripts:
 - `wboxkit.trace` records a set of computational traces of a given Boolean circuit (serialized in a file).
 - `wboxkit.exact` performs the exact matching attack.
 - `wboxkit.lda` performs the linear decoding / linear algebraic attack (LDA).
+
+
+## Tutorials
+
+- [Tutorial 1 - Circuits](./tutorials/Tutorial 1 - Circuits.ipynb)
+- [Tutorial 2 - Countermeasures](./tutorials/Tutorial 2 - Countermeasures.ipynb)
+- [Tutorial 3 - Tracing](./tutorials/Tutorial 3 - Tracing.ipynb)
+- [Tutorial 4 - Attacks](./tutorials/Tutorial 4 - Attacks.ipynb)
