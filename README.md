@@ -1,6 +1,6 @@
 # `wboxkit`: White-box Cryptography Design and Analysis kit
 
-This project is a successor of the previous [`whitebox`](https://github.com/cryptolu/whitebox/tree/master/synthesis) framework proposed at the [WhibOx 2019](https://www.cryptoexperts.com/whibox2019/) workshop, which was written in Python 2 and used custom Boolean circuits. The new (this repo) version is rewritten for Python 3 and also is based on the recent more generic circuit framework [circkit](https://github.com/cryptoexperts/circkit). It also brings improved interfaces and some [tutorials](./tutorials/) (first presented at the [CHES 2022 White-box Cryptography tutorial](https://ches.iacr.org/2022/tutorials.php)).
+This project is a successor of the previous [`cryptolu/whitebox`](https://github.com/cryptolu/whitebox/tree/master/synthesis) framework proposed at the [WhibOx 2019](https://www.cryptoexperts.com/whibox2019/) workshop, which was written in Python 2 and used custom Boolean circuits. The new version (this repo) is rewritten for Python 3 and also is based on the recent more generic circuit framework [circkit](https://github.com/cryptoexperts/circkit). It also brings improved interfaces and some [tutorials](./tutorials/) (first presented at the [CHES 2022 White-box Cryptography tutorial](https://ches.iacr.org/2022/tutorials.php)).
 
 The primary usecase of `wboxkit` is research and experiments on white-box cryptography implementation.
 
