@@ -50,6 +50,15 @@ EXPORT Circuit *load_circuit(char *fname) {
         fprintf(stderr, "malformed circuit file\n");
         goto fail;
     }
+    if (I->bytes_op != 1) {
+        fprintf(stderr, "only 1-byte opcodes are supported\n");
+        goto fail;
+    }
+    if (I->bytes_addr != sizeof(ADDR)) {
+        fprintf(stderr, "this version only supports %lu-byte addressation (circuit uses %lu-byte)\n",
+            sizeof(ADDR), I->bytes_addr);
+        goto fail;
+    }
 
     C->input_addr = malloc(sizeof(ADDR) * I->input_size);
     C->output_addr = malloc(sizeof(ADDR) * I->output_size);
@@ -152,26 +161,26 @@ EXPORT int circuit_compute(Circuit *C, uint8_t *inp, uint8_t *out, char *trace_f
     BYTE *p = C->opcodes;
     for(int i = 0; i < I->num_opcodes; i++) {
         BYTE op = *p++;
-        ADDR dst = *((ADDR *)p); p+=2;
+        ADDR dst = *((ADDR *)p); p+=sizeof(ADDR);
         ADDR a, b;
         switch (op) {
         case XOR:
-            a = *((ADDR *)p); p+=2;
-            b = *((ADDR *)p); p+=2;
+            a = *((ADDR *)p); p+=sizeof(ADDR);
+            b = *((ADDR *)p); p+=sizeof(ADDR);
             ram[dst] = ram[a] ^ ram[b];
             break;
         case AND:
-            a = *((ADDR *)p); p+=2;
-            b = *((ADDR *)p); p+=2;
+            a = *((ADDR *)p); p+=sizeof(ADDR);
+            b = *((ADDR *)p); p+=sizeof(ADDR);
             ram[dst] = ram[a] & ram[b];
             break;
         case OR:
-            a = *((ADDR *)p); p+=2;
-            b = *((ADDR *)p); p+=2;
+            a = *((ADDR *)p); p+=sizeof(ADDR);
+            b = *((ADDR *)p); p+=sizeof(ADDR);
             ram[dst] = ram[a] | ram[b];
             break;
         case NOT:
-            a = *((ADDR *)p); p+=2;
+            a = *((ADDR *)p); p+=sizeof(ADDR);
             ram[dst] = NOTMASK ^ ram[a];
             break;
         case RANDOM:

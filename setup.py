@@ -46,10 +46,29 @@ setup(
 
     ext_modules=[
         CTypesExtension(
-            'wboxkit.libfastcircuit',
+            'wboxkit.libfastcircuit8',
             sources=['src/wboxkit/fastcircuit.c'],
             depends=['src/wboxkit/fastcircuit.h'],
-        )
+            extra_compile_args=['-DCIRCUIT_RAM_BITS=8'],
+        ),
+        CTypesExtension(
+            'wboxkit.libfastcircuit16',
+            sources=['src/wboxkit/fastcircuit.c'],
+            depends=['src/wboxkit/fastcircuit.h'],
+            extra_compile_args=['-DCIRCUIT_RAM_BITS=16'],
+        ),
+        CTypesExtension(
+            'wboxkit.libfastcircuit32',
+            sources=['src/wboxkit/fastcircuit.c'],
+            depends=['src/wboxkit/fastcircuit.h'],
+            extra_compile_args=['-DCIRCUIT_RAM_BITS=32'],
+        ),
+        CTypesExtension(
+            'wboxkit.libfastcircuit64',
+            sources=['src/wboxkit/fastcircuit.c'],
+            depends=['src/wboxkit/fastcircuit.h'],
+            extra_compile_args=['-DCIRCUIT_RAM_BITS=64'],
+        ),
     ],
     cmdclass={'build_ext': build_ext},
 

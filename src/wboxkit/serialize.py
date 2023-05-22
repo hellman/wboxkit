@@ -1,4 +1,6 @@
+import sys
 from collections import defaultdict
+
 from circkit.transformers import Transformer
 
 
@@ -75,8 +77,6 @@ class RawSerializer(Serializer):
     """
     # these options can be overriden by initialization
     bytes_op = 1
-    bytes_input = 1
-    bytes_output = 1
     bytes_addr = 2
     endian = "<"
 
@@ -95,8 +95,6 @@ class RawSerializer(Serializer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.format_op = FORMATS[self.bytes_op]
-        self.format_input = FORMATS[self.bytes_input]
-        self.format_output = FORMATS[self.bytes_output]
         self.format_addr = FORMATS[self.bytes_addr]
 
     def pack(self, format, *args):
@@ -122,6 +120,8 @@ class RawSerializer(Serializer):
             len(self.code),
             sum(map(len, self.code)),
             self.ram_size,
+            self.bytes_op,
+            self.bytes_addr,
         )
         self.input_addr = [
             self.bit_id[xbit]
@@ -160,10 +160,15 @@ class RawSerializer(Serializer):
         for arg in bit.incoming:
             assert isinstance(arg, type(bit)), "Not implemented serialization of non-Bit arguments"
 
-        res = (
-            self.pack(self.format_op, self.opmap(bit.operation._name))
-          + self.pack(self.format_addr, self.bit_id[bit])
-        )
+        try:
+            res = (
+                self.pack(self.format_op, self.opmap(bit.operation._name))
+              + self.pack(self.format_addr, self.bit_id[bit])
+            )
+        except:
+            print("Insufficient circuit memory? Try RawSerializer(bytes_addr=4) or 8.", file=sys.stderr)
+            raise
+
         if bit.incoming:
             incoming = [self.bit_id[bit] for bit in bit.incoming]
             res += self.pack(self.format_addr, *incoming)

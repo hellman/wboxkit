@@ -9,13 +9,16 @@ from ctypes import (
 
 from pathlib import Path
 
-path = Path(__file__).resolve().parent / "libfastcircuit.so"
+LIBS = {}
+for w in (8, 16, 32, 64):
+    path = Path(__file__).resolve().parent / ("libfastcircuit%d.so" % w)
 
-lib = cdll.LoadLibrary(path)
+    lib = cdll.LoadLibrary(path)
 
-lib.load_circuit.restype = c_void_p
-lib.circuit_compute.argtypes = (c_void_p, c_char_p, c_char_p, c_char_p, c_int)
-lib.set_seed.argtypes = c_uint64,
+    lib.load_circuit.restype = c_void_p
+    lib.circuit_compute.argtypes = (c_void_p, c_char_p, c_char_p, c_char_p, c_int)
+    lib.set_seed.argtypes = c_uint64,
+    LIBS[w] = lib
 
 # lib.RANDOM_ENABLED
 
@@ -45,12 +48,24 @@ class CircuitInfo(ctypes.Structure):
         ("num_opcodes", c_uint64),
         ("opcodes_size", c_uint64),
         ("memory", c_uint64),
+        ("bytes_op", c_uint64),
+        ("bytes_addr", c_uint64),
     ]
 
 
 class FastCircuit(object):
     def __init__(self, fname):
-        self.circuit = lib.load_circuit(fname.encode())
+        # parse header
+        header = CircuitInfo()
+        l = ctypes.sizeof(CircuitInfo)
+        with open(fname, "rb") as f:
+            data = f.read(l)
+            assert len(data) == l
+        ctypes.memmove(ctypes.pointer(header), data, len(data))
+
+        # choose appropriate library
+        self.lib = LIBS[header.bytes_addr * 8]
+        self.circuit = self.lib.load_circuit(fname.encode())
         assert self.circuit, f"error loading {fname}"
         self.info = CircuitInfo.from_address(self.circuit)
 
@@ -58,7 +73,7 @@ class FastCircuit(object):
         if trace_filename is not None:
             trace_filename = trace_filename.encode()
         output = ctypes.create_string_buffer( int((self.info.output_size + 7)//8) )
-        ret = lib.circuit_compute(self.circuit, input, output, trace_filename, 1)
+        ret = self.lib.circuit_compute(self.circuit, input, output, trace_filename, 1)
         assert ret
         return output.raw
 
@@ -70,7 +85,7 @@ class FastCircuit(object):
             int(bytes_per_output * len(inputs))
         )
         input = b"".join(inputs)
-        ret = lib.circuit_compute(self.circuit, input, output, trace_filename, len(inputs))
+        ret = self.lib.circuit_compute(self.circuit, input, output, trace_filename, len(inputs))
         assert ret
         return chunks(output.raw, bytes_per_output)
 
@@ -82,7 +97,7 @@ class FastCircuit(object):
         return outputs
 
     def __del__(self):
-        lib.free_circuit(self.circuit)
+        self.lib.free_circuit(self.circuit)
 
 
 if __name__ == '__main__':
